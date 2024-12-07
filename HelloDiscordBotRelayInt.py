@@ -9,9 +9,6 @@ from discord.ext import commands
 import os
 
 # pip install web3
-
-from web3 import Web3
-from eth_account.messages import defunct_hash_message
 from web3 import Web3
 from hexbytes import HexBytes
 from eth_account.messages import encode_defunct
