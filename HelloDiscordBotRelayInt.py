@@ -60,7 +60,7 @@ token = token_content
 print("Hello Discord Bot Relay Int")
 print("Token (truncated):", token[:10], "...")
 
-SERVER_ID = 1189765674554376192
+SERVER_ID = 1189765674554376192 
 SALON_ID = 1222573438187737100 ## TWITCH PLAY CHAT
 SALON_ID= 1223448265492795454 ## TWITCH PLAY CHAT CONFERENCE
 
@@ -132,6 +132,15 @@ def try_to_push_valide_integer(text):
         except ValueError:
             return False
 
+git_discord_verification_folder= "MetaMaskVerifiedUsers/Discord"
+def record_author_as_meta_mask_user_verified(author_id, public_address):
+    print(f"Recorded user {author_id} as verified with public address {public_address}")
+    if not os.path.exists(git_discord_verification_folder):
+        os.makedirs(git_discord_verification_folder)
+    with open(f"{git_discord_verification_folder}/{author_id}.txt", "w") as f:
+        f.write(public_address)
+    print("Path:", os.path.abspath(f"{git_discord_verification_folder}/{author_id}.txt"))
+    
 # Event: Triggered when a message is sent in the server or as a DM
 @bot.event
 async def on_message(message):
@@ -157,7 +166,7 @@ async def on_message(message):
             print(f"User GUID {author_id}: {get_guid(author_id)}")
 
         
-        if(message.content == "Hello"):
+        if(message.content == "Hello" or message.content == "!Hello"):
             await message.author.send("Hello! How can I help you?")
 
         try_to_push_valide_integer(string_stripped)
@@ -178,9 +187,15 @@ async def on_message(message):
                 print("Splitter found:",string_message_text.find("|"))
                 #if string_message_text.find(string_guid) == 0 and  string_message_text.find("|") >0:
                 if verify_signature_from_text(string_message_text):
+                    split_message = string_message_text.split("|")
+                    
                     await message.author.send("Signature is verified")
+                    record_author_as_meta_mask_user_verified(author_id,split_message[1])
+                    #Add it to the database or file system
                 else:
                     await message.author.send("Signature is not verified")
+                
+                dictionary_guid_to_sign[author_id] = ""
             
             
     # Allow other commands to process
