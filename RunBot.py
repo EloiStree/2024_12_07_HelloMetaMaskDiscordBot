@@ -22,11 +22,9 @@ from hexbytes import HexBytes
 from eth_account.messages import encode_defunct
 
 
-# Windows Default
-string_where_to_store_verified_user = "C:/MetaMaskVerifiedUsers/Discord"
 # Linux Default
-string_where_to_store_verified_user = "/root/MetaMaskVerifiedUsers/Discord"
-
+# Run  /git/discord_bot/RunBot.py
+string_where_to_store_verified_user = "/git/metamask_users/discord"
 
 def verify_signature_from_text(text, splitter="|"):
     splitted = text.split(splitter)
@@ -42,12 +40,17 @@ def verify_signature(message, public_address, signed_message):
     is_verified = address_recovered == public_address
     return is_verified
     
-token_file_path = "bot_token.txt"
+token_file_path = "/token/discord_bot_token.txt"
 
 print("Path:", os.path.abspath(token_file_path))
 
+
+
 if not os.path.exists(token_file_path):
     print("Creating a default file at that path")
+    string_folder_path = os.path.dirname(token_file_path)
+    if not os.path.exists(string_folder_path):
+        os.makedirs(string_folder_path)
     with open(token_file_path, "w") as f:
         f.write("https://discord.com/developers/applications")
 
