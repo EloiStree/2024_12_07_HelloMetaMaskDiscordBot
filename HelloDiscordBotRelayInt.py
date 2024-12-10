@@ -1,6 +1,15 @@
-
+# Ubuntu
 # pip install discord.py
 # pip install audioop-lts
+# pip install web3
+
+# Debian
+# pip install discord.py --break-system-packages
+# pip install audioop-lts --break-system-packages 
+# pip3 install web3 --break-system-packages
+
+# Note Audioop is removed in Python 3.13
+
 import socket
 import struct
 import uuid
@@ -8,10 +17,16 @@ import discord
 from discord.ext import commands
 import os
 
-# pip install web3
 from web3 import Web3
 from hexbytes import HexBytes
 from eth_account.messages import encode_defunct
+
+
+# Windows Default
+string_where_to_store_verified_user = "C:/MetaMaskVerifiedUsers/Discord"
+# Linux Default
+string_where_to_store_verified_user = "/root/MetaMaskVerifiedUsers/Discord"
+
 
 def verify_signature_from_text(text, splitter="|"):
     splitted = text.split(splitter)
@@ -27,15 +42,10 @@ def verify_signature(message, public_address, signed_message):
     is_verified = address_recovered == public_address
     return is_verified
     
-
-
-# Define the path to the bot token file
 token_file_path = "bot_token.txt"
 
-# Display the absolute path of the token file
 print("Path:", os.path.abspath(token_file_path))
 
-# Check if the token file exists; if not, create it with a placeholder URL
 if not os.path.exists(token_file_path):
     print("Creating a default file at that path")
     with open(token_file_path, "w") as f:
@@ -64,6 +74,8 @@ SERVER_ID = 1189765674554376192
 SALON_ID = 1222573438187737100 ## TWITCH PLAY CHAT
 SALON_ID= 1223448265492795454 ## TWITCH PLAY CHAT CONFERENCE
 
+ADMIN_DISCORD_USER_ID= [191665082894254081]
+
 # Bot Setup
 intents = discord.Intents.default()
 intents.messages = True
@@ -77,9 +89,6 @@ admin_role_name = "Admin"  # Replace with your admin role name
 
 
     
-    
-print("Signed:",verify_signature_from_text("c538b4d2-4a3b-4756-8471-dbe9dfbc96d2|0xFEEAcdE5d735B8b347D9BBF8fBd02FEd153b564A|0x79dc5d03c0ac6fda591997a03fa6fd1a4876f6308813115edd4d0b8b5aecee2b67f29f20157e6427566cfcc7b9d52362ff5005c9dd2628bdfe904c39bfab85d31b"))
-
 # Check for Admin Role
 def is_admin(ctx):
     if ctx.guild:  # Ensure the command is in a guild context
@@ -111,6 +120,9 @@ def get_guid(author_id):
     return dictionary_guid_to_sign[author_id]
 
 
+def is_admin(author_id):
+    return author_id in ADMIN_DISCORD_USER_ID
+
 def push_integer_to_server(integer):
     ivp4 = "192.168.1.37"
     port = 7073
@@ -132,14 +144,13 @@ def try_to_push_valide_integer(text):
         except ValueError:
             return False
 
-git_discord_verification_folder= "MetaMaskVerifiedUsers/Discord"
 def record_author_as_meta_mask_user_verified(author_id, public_address):
     print(f"Recorded user {author_id} as verified with public address {public_address}")
-    if not os.path.exists(git_discord_verification_folder):
-        os.makedirs(git_discord_verification_folder)
-    with open(f"{git_discord_verification_folder}/{author_id}.txt", "w") as f:
+    if not os.path.exists(string_where_to_store_verified_user):
+        os.makedirs(string_where_to_store_verified_user)
+    with open(f"{string_where_to_store_verified_user}/{author_id}.txt", "w") as f:
         f.write(public_address)
-    print("Path:", os.path.abspath(f"{git_discord_verification_folder}/{author_id}.txt"))
+    print("Path:", os.path.abspath(f"{string_where_to_store_verified_user}/{author_id}.txt"))
     
 # Event: Triggered when a message is sent in the server or as a DM
 @bot.event
@@ -164,10 +175,23 @@ async def on_message(message):
 
         if has_guid(author_id):        
             print(f"User GUID {author_id}: {get_guid(author_id)}")
+            
+    
 
         
         if(message.content == "Hello" or message.content == "!Hello"):
             await message.author.send("Hello! How can I help you?")
+            
+        if(string_stripped == "!IsAdmin"):
+            bool_is_admin = is_admin(author_id)
+            if bool_is_admin:
+                await message.author.send("You are an admin.")
+            else:
+                await message.author.send("You are not an admin.")
+        if (string_stripped == "!WhoAdmin"):
+            string_admins_list=  "Admins are: " + str(ADMIN_DISCORD_USER_ID)
+            await message.author.send(string_admins_list)
+            
 
         try_to_push_valide_integer(string_stripped)
         if (message.content == "MetaMask" or message.content == "metamask" or message.content == "🦊"):
@@ -194,7 +218,6 @@ async def on_message(message):
                     #Add it to the database or file system
                 else:
                     await message.author.send("Signature is not verified")
-                
                 dictionary_guid_to_sign[author_id] = ""
             
             
