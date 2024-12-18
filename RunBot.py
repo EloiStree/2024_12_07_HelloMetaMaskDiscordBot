@@ -38,6 +38,13 @@ from web3 import Web3
 from hexbytes import HexBytes
 from eth_account.messages import encode_defunct
 
+
+import discord
+from discord.ext import commands
+import atexit
+
+
+
 # Linux Default
 # Run  /git/discord_bot/RunBot.py
 # Token: /token/discord_bot_token.txt
@@ -95,7 +102,7 @@ SALON_ID.append(1223448265492795454) ## TWITCH PLAY CHAT CONFERENCE
 SALON_ID.append(1318337581393514587) ## WORKING ON TWITCH
 SALON_ID.append(1316424864160157756) ## APINT TO BOT
 
-ADMIN_DISCORD_USER_ID= [191665082894254081]
+ADMIN_DISCORD_USER_ID= [191665082894254081,0]
 
 
 
@@ -106,9 +113,32 @@ INTERPRETER_PORT_INTEGER=3615
 
 
 
-import discord
-from discord.ext import commands
+ram_db_integer_public_address = dict()
 
+string_path_save_ram_db = "ram_db_int_eth.txt"
+def save_on_file():
+    db_key_value_as_file = ""
+    for key in ram_db_integer_public_address:
+        db_key_value_as_file += f"{key}:{ram_db_integer_public_address[key]}\n"        
+    with open(string_path_save_ram_db, "w") as f:
+            f.write(db_key_value_as_file)
+    print(f"Saved to file user {len(ram_db_integer_public_address)}")
+
+def load_from_file():
+    if os.path.exists(string_path_save_ram_db):
+        string_file = open(string_path_save_ram_db, "r").read()
+        
+        for line in string_file.split("\n"):
+            if len(line) > 0:
+                key, value = line.split(":")
+                ram_db_integer_public_address[key] = value
+    print(f"Loaded from file user {len(ram_db_integer_public_address)}")
+    
+    
+load_from_file()
+
+atexit.register(save_on_file)
+ 
 # Bot Setup
 intents = discord.Intents.default()
 intents.messages = True
@@ -120,24 +150,55 @@ intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 admin_role_name = "Admin"  # Replace with your admin role name
 
-
+bool_allow_guest_ping = False
+async def response_to_guest_or_admin(ctx, message):
+    if bool_allow_guest_ping:
+        await ctx.send(message)
+    elif is_admin(ctx):
+        await ctx.send(message)
 
 @bot.command(name="hello")
 async def hello_callback(ctx):
-    await ctx.send(f"Hello {ctx.author} ({ctx.author.id})")
+    
+    if str(ctx.author.id) in ram_db_integer_public_address:
+        await ctx.send(f"Hello {ctx.author.id}🦊🔑🎮{ram_db_integer_public_address[str(ctx.author.id)]}")
+    else :
+        await ctx.send(f"Hello {ctx.author} ({ctx.author.id})")
     
 
 @bot.command(name="ping")
 async def hello_callback(ctx):
-    await ctx.send("pong")
+    await response_to_guest_or_admin(ctx, "pong")
+    
+
+
+@bot.command(name="i?")
+async def hello_callback(ctx):
+    await response_to_guest_or_admin(ctx, "🫡")
+    
+
+
 
 
 
 @bot.event
 async def on_command_error(ctx, error):
     message_back=""
-    command_string = ctx.message.content
-    print(f"Command: {command_string}")
+    command_string = ctx.message.content.strip()
+    command_string_low = ctx.message.content.lower().strip()
+    print(f" Unadded Command: {command_string_low}")
+    
+    bool_is_admin = is_admin(ctx)
+    if(command_string_low == "!isbotadmin"):
+            if bool_is_admin:
+                await ctx.author.send("You are an admin.")
+            else:
+                await ctx.author.send("You are not an admin.")
+    if (command_string_low == "!whoisbotadmin"):
+        string_admins_list=  "PI Bot Admins are: " + str(ADMIN_DISCORD_USER_ID)
+        await ctx.author.send(string_admins_list)
+        
+
     
     if len(command_string) > 2 and command_string[0] == "!" and command_string[1] == "s" :
         try_to_push_valide_text(command_string)
@@ -151,9 +212,8 @@ async def on_command_error(ctx, error):
     
 # Check for Admin Role
 def is_admin(ctx):
-    if ctx.guild:  # Ensure the command is in a guild context
-        return any(role.name == admin_role_name for role in ctx.author.roles)
-    return False  # No roles exist in DM context
+        print (f"Checking if {ctx.author.id} is an admin {ADMIN_DISCORD_USER_ID}")
+        return ctx.author.id in ADMIN_DISCORD_USER_ID
 
 
 @bot.command()
@@ -179,8 +239,6 @@ def get_guid(author_id):
     return dictionary_guid_to_sign[author_id]
 
 
-def is_admin(author_id):
-    return author_id in ADMIN_DISCORD_USER_ID
 
 def push_integer_to_server(integer):
     ivp4 = INTERPRETER_IVP4
@@ -240,10 +298,19 @@ def record_author_as_meta_mask_user_verified(author_id, public_address):
     with open(f"{string_where_to_store_verified_user}/{author_id}.txt", "w") as f:
         f.write(public_address)
     print("Path:", os.path.abspath(f"{string_where_to_store_verified_user}/{author_id}.txt"))
+    ram_db_integer_public_address[str(author_id)] = public_address
+    save_on_file()
     
-    
+def is_author_in_file_db(author_id):
+    return os.path.exists(f"{string_where_to_store_verified_user}/{author_id}.txt")
 
-def is_salong_id_observed(salon_id):
+def feth_author_from_file_db(author_id):
+    if is_author_in_file_db(author_id):
+        with open(f"{string_where_to_store_verified_user}/{author_id}.txt", "r") as f:
+            return f.read().strip()
+    return None
+
+def is_salon_id_observed(salon_id):
     return salon_id in SALON_ID    
 
 # Event: Triggered when a message is sent in the server or as a DM
@@ -253,37 +320,36 @@ async def on_message(message):
     if message.author == bot.user:
         return
     string_stripped = message.content.strip()
-    author_id= message.author.id
+    author_id = str(message.author.id)
 
     # Allow other commands to process
     await bot.process_commands(message)
     
+    if message.content.startswith(author_id) and message.content.find("|") > 0:
+        split_text = message.content.split("|")
+        if len(split_text) == 3:
+            message_to_signed = split_text[0]
+            if message_to_signed == author_id:
+                public_address = split_text[1]
+                signature = split_text[2]
+                if verify_signature(message_to_signed, public_address, signature):
+                    record_author_as_meta_mask_user_verified(author_id, public_address)
+                    await message.author.send("Signature is verified")
+                    return
+                        
     # Check if the message is in the specified server and channel
-    if message.guild and is_salong_id_observed(message.channel.id):
+    if message.guild and is_salon_id_observed(message.channel.id):
             print(f"Message received in channel {message.channel.id}: {message.content}")
             #try_to_push_valide_integer(string_stripped)
             #await message.channel.send(f"Hello {message.author.mention}, I see your message: {message.content}")
     # Check if the message is a direct message to the bot
     elif message.guild is None:  # DMs do not have a guild attribute
         print(f"Direct message received from {message.author}: {message.content}")
+        
+       
 
         if has_guid(author_id):        
             print(f"User GUID {author_id}: {get_guid(author_id)}")
-            
-
-        
-        if(message.content == "Hello" or message.content == "!Hello"):
-            await message.author.send("Hello! How can I help you?")
-            
-        if(string_stripped == "!IsAdmin"):
-            bool_is_admin = is_admin(author_id)
-            if bool_is_admin:
-                await message.author.send("You are an admin.")
-            else:
-                await message.author.send("You are not an admin.")
-        if (string_stripped == "!WhoAdmin"):
-            string_admins_list=  "Admins are: " + str(ADMIN_DISCORD_USER_ID)
-            await message.author.send(string_admins_list)
             
 
         try_to_push_valide_integer(string_stripped)
