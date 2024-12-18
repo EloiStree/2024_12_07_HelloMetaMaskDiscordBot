@@ -1,14 +1,31 @@
-# Ubuntu
-# pip install discord.py
-# pip install audioop-lts
-# pip install web3
 
 # Debian
 # pip install discord.py --break-system-packages
 # pip install audioop-lts --break-system-packages 
 # pip3 install web3 --break-system-packages
 
-# Note Audioop is removed in Python 3.13
+# Debian: /lib/systemd/system/apintio_bot_discord.service
+# Learn: https://youtu.be/nvx9jJhSELQ?t=279s
+"""
+[Unit]
+Description=Discord Bot
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python  /git/discord_bot/RunBot.py
+Restart=on-abort
+
+[Install]
+WantedBy=multi-user.target
+"""
+# Learn: https://youtu.be/nvx9jJhSELQ?t=368
+# cd /lib/systemd/system/
+# sudo systemctl enable apintio_bot_discord.service
+# sudo systemctl start apintio_bot_discord.service
+# sudo systemctl status apintio_bot_discord.service
+# sudo systemctl stop apintio_bot_discord.service
+# sudo systemctl restart apintio_bot_discord.service
 
 import socket
 import struct
@@ -21,9 +38,9 @@ from web3 import Web3
 from hexbytes import HexBytes
 from eth_account.messages import encode_defunct
 
-
 # Linux Default
 # Run  /git/discord_bot/RunBot.py
+# Token: /token/discord_bot_token.txt
 string_where_to_store_verified_user = "/git/metamask_users/discord"
 
 def verify_signature_from_text(text, splitter="|"):
@@ -43,9 +60,6 @@ def verify_signature(message, public_address, signed_message):
 token_file_path = "/token/discord_bot_token.txt"
 
 print("Path:", os.path.abspath(token_file_path))
-
-
-
 if not os.path.exists(token_file_path):
     print("Creating a default file at that path")
     string_folder_path = os.path.dirname(token_file_path)
@@ -74,10 +88,26 @@ print("Hello Discord Bot Relay Int")
 print("Token (truncated):", token[:10], "...")
 
 SERVER_ID = 1189765674554376192 
-SALON_ID = 1222573438187737100 ## TWITCH PLAY CHAT
-SALON_ID= 1223448265492795454 ## TWITCH PLAY CHAT CONFERENCE
+
+SALON_ID= list()
+SALON_ID.append(1222573438187737100) ## TWITCH PLAY CHAT
+SALON_ID.append(1223448265492795454) ## TWITCH PLAY CHAT CONFERENCE
+SALON_ID.append(1318337581393514587) ## WORKING ON TWITCH
+SALON_ID.append(1316424864160157756) ## APINT TO BOT
 
 ADMIN_DISCORD_USER_ID= [191665082894254081]
+
+
+
+
+INTERPRETER_IVP4="127.0.0.1"
+INTERPRETER_PORT_TEXT=3614
+INTERPRETER_PORT_INTEGER=3615
+
+
+
+import discord
+from discord.ext import commands
 
 # Bot Setup
 intents = discord.Intents.default()
@@ -91,6 +121,33 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 admin_role_name = "Admin"  # Replace with your admin role name
 
 
+
+@bot.command(name="hello")
+async def hello_callback(ctx):
+    await ctx.send(f"Hello {ctx.author} ({ctx.author.id})")
+    
+
+@bot.command(name="ping")
+async def hello_callback(ctx):
+    await ctx.send("pong")
+
+
+
+@bot.event
+async def on_command_error(ctx, error):
+    message_back=""
+    command_string = ctx.message.content
+    print(f"Command: {command_string}")
+    
+    if len(command_string) > 2 and command_string[0] == "!" and command_string[1] == "s" :
+        try_to_push_valide_text(command_string)
+    else: 
+        for c in command_string.split(" "):
+            if len(c) > 2 and c[0] == "!" and c[1] == "i" :
+                try_to_push_valide_integer(c)
+       
+    if len(message_back) > 0:
+        await ctx.send(message_back)
     
 # Check for Admin Role
 def is_admin(ctx):
@@ -101,10 +158,9 @@ def is_admin(ctx):
 
 @bot.command()
 async def listen(ctx, *, message):
-    if is_admin(ctx):
-        await ctx.send(f"Listening to: {message}")
-    else:
-        await ctx.send("You don't have permission to use this command.")
+    # if is_admin(ctx):
+    #     await ctx.send(f"Listening to: {message}")
+    await ctx.send(f"Listening to: {message}")
 
 
 # Events
@@ -127,25 +183,55 @@ def is_admin(author_id):
     return author_id in ADMIN_DISCORD_USER_ID
 
 def push_integer_to_server(integer):
-    ivp4 = "192.168.1.37"
-    port = 7073
-    index=1
+    ivp4 = INTERPRETER_IVP4
+    port = INTERPRETER_PORT_INTEGER
+    index=0
     print(f"Pushing integer {integer} to server {ivp4}:{port}")
     byte = struct.pack("<ii", index, integer)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.sendto(byte, (ivp4, port))
     sock.close()
+    
+def push_index_integer_to_server(index, integer):
+    ivp4 = INTERPRETER_IVP4
+    port = INTERPRETER_PORT_INTEGER
+    
+    print(f"Pushing integer {index} {integer} to server {ivp4}:{port}")
+    byte = struct.pack("<ii", index, integer)
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.sendto(byte, (ivp4, port))
+    sock.close()
+
+
+def try_to_push_valide_text(text:str):
+    print("Pushing text as short cut")
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    sock.sendto(text.encode() , (INTERPRETER_IVP4, INTERPRETER_PORT_TEXT))
+    sock.close()
 
 def try_to_push_valide_integer(text):
-    if text == "0":
-        push_integer_to_server(0)
-    else:
-        try:
-            integer = int(text)
-            push_integer_to_server(integer)
+    if len(text) >2 and text[0] == "!" and text[1] == "i" :
+        text = text[2:]
+       
+    if text.find(".") >= 0:
+        ts= text.split(".")
+        try :
+            index = int(ts[0])
+            integer = int(ts[1])
+            push_index_integer_to_server(index, integer)
             return True
         except ValueError:
             return False
+    else :
+        if text == "0":
+            push_integer_to_server(0)
+        else:
+            try:
+                integer = int(text)
+                push_integer_to_server(integer)
+                return True
+            except ValueError:
+                return False
 
 def record_author_as_meta_mask_user_verified(author_id, public_address):
     print(f"Recorded user {author_id} as verified with public address {public_address}")
@@ -155,23 +241,28 @@ def record_author_as_meta_mask_user_verified(author_id, public_address):
         f.write(public_address)
     print("Path:", os.path.abspath(f"{string_where_to_store_verified_user}/{author_id}.txt"))
     
+    
+
+def is_salong_id_observed(salon_id):
+    return salon_id in SALON_ID    
+
 # Event: Triggered when a message is sent in the server or as a DM
 @bot.event
 async def on_message(message):
-    # Ignore bot's own messages to avoid an infinite loop
     
     if message.author == bot.user:
         return
-    
-    
     string_stripped = message.content.strip()
     author_id= message.author.id
 
+    # Allow other commands to process
+    await bot.process_commands(message)
+    
     # Check if the message is in the specified server and channel
-    if message.guild and message.channel.id == SALON_ID:
-        print(f"Message received in channel {SALON_ID}: {message.content}")
-        try_to_push_valide_integer(string_stripped)
-        #await message.channel.send(f"Hello {message.author.mention}, I see your message: {message.content}")
+    if message.guild and is_salong_id_observed(message.channel.id):
+            print(f"Message received in channel {message.channel.id}: {message.content}")
+            #try_to_push_valide_integer(string_stripped)
+            #await message.channel.send(f"Hello {message.author.mention}, I see your message: {message.content}")
     # Check if the message is a direct message to the bot
     elif message.guild is None:  # DMs do not have a guild attribute
         print(f"Direct message received from {message.author}: {message.content}")
@@ -179,7 +270,6 @@ async def on_message(message):
         if has_guid(author_id):        
             print(f"User GUID {author_id}: {get_guid(author_id)}")
             
-    
 
         
         if(message.content == "Hello" or message.content == "!Hello"):
