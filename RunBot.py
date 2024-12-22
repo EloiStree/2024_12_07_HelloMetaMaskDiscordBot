@@ -199,13 +199,9 @@ async def on_command_error(ctx, error):
         await ctx.author.send(string_admins_list)
         
 
-    
-    if len(command_string) > 2 and command_string[0] == "!" and command_string[1] == "s" :
+    if len(command_string) > 1 and command_string[0] == "!" :
         try_to_push_valide_text(command_string)
-    else: 
-        for c in command_string.split(" "):
-            if len(c) > 2 and c[0] == "!" and c[1] == "i" :
-                try_to_push_valide_integer(c)
+    
        
     if len(message_back) > 0:
         await ctx.send(message_back)
@@ -262,7 +258,7 @@ def push_index_integer_to_server(index, integer):
 
 
 def try_to_push_valide_text(text:str):
-    print("Pushing text as short cut")
+    print("Pushing text as short cut:"+ text)
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     sock.sendto(text.encode() , (INTERPRETER_IVP4, INTERPRETER_PORT_TEXT))
     sock.close()
@@ -338,16 +334,26 @@ async def on_message(message):
                     return
                         
     # Check if the message is in the specified server and channel
-    if message.guild and is_salon_id_observed(message.channel.id):
+    elif message.guild and is_salon_id_observed(message.channel.id):
             print(f"Message received in channel {message.channel.id}: {message.content}")
+            message_content= message.content.strip()
+            int_message_lenght = len(message.content)
+            if(len(message_content)>=1):
+                if message_content[0] == "!" and message_content[1] == "i":
+                    try_to_push_valide_integer(string_stripped)
+                elif message_content[0] == "!":
+                    try_to_push_valide_text(string_stripped)
+                elif int_message_lenght==1:
+                    try_to_push_valide_text(string_stripped)
+                elif int_message_lenght==2:
+                    try_to_push_valide_text(string_stripped[0])
+            
             #try_to_push_valide_integer(string_stripped)
             #await message.channel.send(f"Hello {message.author.mention}, I see your message: {message.content}")
     # Check if the message is a direct message to the bot
     elif message.guild is None:  # DMs do not have a guild attribute
         print(f"Direct message received from {message.author}: {message.content}")
         
-       
-
         if has_guid(author_id):        
             print(f"User GUID {author_id}: {get_guid(author_id)}")
             
