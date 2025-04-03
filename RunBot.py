@@ -4,7 +4,8 @@
 # pip install audioop-lts --break-system-packages 
 # pip3 install web3 --break-system-packages
  #
-# Debian: /etc/systemd/system/apint_bot_discord.service
+# Debian: 
+# sudo nano /etc/systemd/system/apint_bot_discord.service
 # Learn: https://youtu.be/nvx9jJhSELQ?t=279s
 """
 [Unit]
@@ -19,13 +20,37 @@ Restart=on-abort
 [Install]
 WantedBy=multi-user.target
 """
+
+# sudo nano /etc/systemd/system/apint_bot_discord.timer
+"""
+[Unit]
+Description=Discord Bot Auth time manager
+
+[Timer]
+OnBootSec=0min
+OnUnitActiveSec=10s
+
+[Install]
+WantedBy=timers.target
+"""
+
+
 # Learn: https://youtu.be/nvx9jJhSELQ?t=368
-# cd /etc/systemd/system/
-# sudo systemctl enable apint_bot_discord.service
-# sudo systemctl start apint_bot_discord.service
-# sudo systemctl status apint_bot_discord.service
-# sudo systemctl stop apint_bot_discord.service
-# sudo systemctl restart apint_bot_discord.service
+"""
+cd /etc/systemd/system/
+
+sudo systemctl daemon-reload
+chmod +x /git/apint_bot_discord/RunBot.py
+sudo systemctl enable apint_bot_discord.service
+sudo systemctl enable apint_bot_discord.timer
+sudo systemctl restart apint_bot_discord.service
+sudo systemctl restart apint_bot_discord.timer
+
+sudo systemctl start apint_bot_discord.service
+sudo systemctl status apint_bot_discord.service
+sudo systemctl stop apint_bot_discord.service
+"""
+
 
 import socket
 import struct
