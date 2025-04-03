@@ -4,7 +4,7 @@
 # pip install audioop-lts --break-system-packages 
 # pip3 install web3 --break-system-packages
 
-# Debian: /lib/systemd/system/apintio_bot_discord.service
+# Debian: /etc/systemd/system/apint_bot_discord.service
 # Learn: https://youtu.be/nvx9jJhSELQ?t=279s
 """
 [Unit]
@@ -13,19 +13,19 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python  /git/discord_bot/RunBot.py
+ExecStart=/usr/bin/python  /git/apint_bot_discord/RunBot.py
 Restart=on-abort
 
 [Install]
 WantedBy=multi-user.target
 """
 # Learn: https://youtu.be/nvx9jJhSELQ?t=368
-# cd /lib/systemd/system/
-# sudo systemctl enable apintio_bot_discord.service
-# sudo systemctl start apintio_bot_discord.service
-# sudo systemctl status apintio_bot_discord.service
-# sudo systemctl stop apintio_bot_discord.service
-# sudo systemctl restart apintio_bot_discord.service
+# cd /etc/systemd/system/
+# sudo systemctl enable apint_bot_discord.service
+# sudo systemctl start apint_bot_discord.service
+# sudo systemctl status apint_bot_discord.service
+# sudo systemctl stop apint_bot_discord.service
+# sudo systemctl restart apint_bot_discord.service
 
 import socket
 import struct
@@ -46,7 +46,7 @@ import atexit
 
 
 # Linux Default
-# Run  /git/discord_bot/RunBot.py
+# Run  /git/apint_bot_discord/RunBot.py
 # Token: /token/discord_bot_token.txt
 string_where_to_store_verified_user = "/git/metamask_users/discord"
 
