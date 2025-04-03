@@ -1,4 +1,4 @@
-# Hello MegaMask 🦊 Discord Bot 🤖
+# Hello MetaMask 🦊 Discord Bot 🤖
 
 This code demonstrates how to use MetaMask to authenticate a Discord user with an Ethereum account.
 
