@@ -263,6 +263,7 @@ def try_to_push_valide_text(text:str):
     sock.sendto(text.encode() , (INTERPRETER_IVP4, INTERPRETER_PORT_TEXT))
     sock.close()
 
+bool_debug_integer_received=True
 def try_to_push_valide_integer(text):
     if len(text) >2 and text[0] == "!" and text[1] == "i" :
         text = text[2:]
@@ -273,6 +274,9 @@ def try_to_push_valide_integer(text):
             index = int(ts[0])
             integer = int(ts[1])
             push_index_integer_to_server(index, integer)
+            
+            if bool_debug_integer_received:
+                print(f"Received integer: {integer} at index {index}")
             return True
         except ValueError:
             return False
@@ -280,9 +284,12 @@ def try_to_push_valide_integer(text):
         if text == "0":
             push_integer_to_server(0)
         else:
+            
             try:
                 integer = int(text)
                 push_integer_to_server(integer)
+                if bool_debug_integer_received:
+                    print(f"Received integer: {integer}")
                 return True
             except ValueError:
                 return False
